@@ -113,6 +113,11 @@ is written next to `credentials.json`. Both files are git-ignored.
 cp .env.example .env       # then edit .env and set ANTHROPIC_API_KEY
 ```
 
+On first run the agent also asks for the **Gmail address you authorised** (the
+account added as a Test user) and saves it to `.env` as `USER_EMAIL`. That value
+pre-selects the right account on Google's consent screen and is verified after
+sign-in — so you won't accidentally authorise the wrong account.
+
 ### 4. Install & run
 
 ```bash

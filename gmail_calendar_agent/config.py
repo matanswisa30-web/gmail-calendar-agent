@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass, field
+from pathlib import Path
 
 try:
     # python-dotenv is optional at import time; load .env if present.
@@ -50,6 +51,10 @@ class Settings:
     credentials_file: str = "credentials.json"
     token_file: str = "token.json"
 
+    # The Gmail account the user granted API access to. Used as the OAuth
+    # ``login_hint`` (pre-selects the right account) and verified after sign-in.
+    user_email: str = ""
+
     scopes: list[str] = field(default_factory=lambda: list(SCOPES))
 
     @classmethod
@@ -63,9 +68,29 @@ class Settings:
             timezone=_get("TIMEZONE", "Asia/Jerusalem"),
             credentials_file=_get("CREDENTIALS_FILE", "credentials.json"),
             token_file=_get("TOKEN_FILE", "token.json"),
+            user_email=_get("USER_EMAIL", ""),
         )
 
     @property
     def llm_enabled(self) -> bool:
         """Whether the LLM layer can run (requires an API key)."""
         return bool(self.anthropic_api_key)
+
+
+def save_user_email(email: str, env_file: str = ".env") -> None:
+    """Persist ``USER_EMAIL`` to the .env file so the user isn't asked again.
+
+    Updates an existing (uncommented) ``USER_EMAIL=`` line if present, otherwise
+    appends one. Creates the file if it does not exist.
+    """
+    path = Path(env_file)
+    lines = path.read_text(encoding="utf-8").splitlines() if path.exists() else []
+    new_line = f"USER_EMAIL={email}"
+    for i, line in enumerate(lines):
+        stripped = line.strip()
+        if stripped.startswith("USER_EMAIL=") and not stripped.startswith("#"):
+            lines[i] = new_line
+            break
+    else:
+        lines.append(new_line)
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")

@@ -13,7 +13,7 @@ import sys
 from gmail_calendar_agent.agent import Agent, AgentOptions
 from gmail_calendar_agent.auth import build_services
 from gmail_calendar_agent.calendar_client import CalendarClient
-from gmail_calendar_agent.config import Settings
+from gmail_calendar_agent.config import Settings, save_user_email
 from gmail_calendar_agent.gmail_client import GmailClient
 from gmail_calendar_agent.llm import AnthropicLLM
 
@@ -44,6 +44,24 @@ def main(argv: list[str] | None = None) -> int:
     settings = Settings.load()
     if args.lookback:
         settings.lookback = args.lookback
+
+    # Ask once for the Gmail account that was granted API access, then remember
+    # it in .env. It pre-selects the right account during Google sign-in and is
+    # verified afterwards.
+    if not settings.user_email:
+        try:
+            entered = input(
+                "Enter the Gmail address you granted API access to: "
+            ).strip()
+        except EOFError:
+            entered = ""
+        if entered:
+            settings.user_email = entered
+            try:
+                save_user_email(entered)
+                print("Saved USER_EMAIL to .env — future runs won't ask again.\n")
+            except Exception as exc:  # non-fatal: continue without persisting
+                print(f"(Could not write .env: {exc})\n")
 
     # Authenticate and build Google services (runs OAuth on first use).
     try:

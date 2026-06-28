@@ -13,6 +13,7 @@ Task checklist. `[x]` done · `[ ]` open. See [`PLAN.md`](PLAN.md) for milestone
 - [x] `auth.py` — `get_credentials()` (load/refresh/first-run flow → `token.json`)
 - [x] `build_services()` — Gmail v1 + Calendar v3 service objects
 - [x] Scopes: `gmail.modify`, `calendar`
+- [x] `USER_EMAIL` account selection: prompt on first run, save to `.env` (`save_user_email`), pass as `login_hint`, verify signed-in account (`_verify_account`)
 
 ## Step 1 — Scan emails
 - [x] `gmail_client.list_recent()` with `newer_than` query
@@ -51,9 +52,14 @@ Task checklist. `[x]` done · `[ ]` open. See [`PLAN.md`](PLAN.md) for milestone
 - [x] `main.py` — argparse flags, wiring, run summary
 - [x] `--verbose` reasoning output
 
+## Skill
+- [x] `gmail-meeting-scheduler/SKILL.md` — Skill definition (when/how to invoke the agent)
+
 ## Tests & docs
 - [x] `tests/test_classifier.py` — offline rule-layer tests
 - [x] `README.md`, `PRD.md`, `PLAN.md`, `TODO.md`
+- [x] `screenshots/` folder + embedded "Screenshots" section in `README.md`
+- [ ] Capture the 5 run screenshots and drop them into `screenshots/`
 
 ## Nice-to-have (future)
 - [ ] Suggest alternative free slots when busy

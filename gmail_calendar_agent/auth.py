@@ -45,7 +45,10 @@ def get_credentials(settings: Settings) -> Credentials:
             flow = InstalledAppFlow.from_client_secrets_file(
                 str(creds_path), settings.scopes
             )
-            creds = flow.run_local_server(port=0)
+            # Pre-select the account the user said they authorised. This avoids
+            # the common "wrong Google account -> access_denied" mistake.
+            extra = {"login_hint": settings.user_email} if settings.user_email else {}
+            creds = flow.run_local_server(port=0, **extra)
 
         token_path.write_text(creds.to_json(), encoding="utf-8")
 
@@ -57,4 +60,23 @@ def build_services(settings: Settings):
     creds = get_credentials(settings)
     gmail_service = build("gmail", "v1", credentials=creds)
     calendar_service = build("calendar", "v3", credentials=creds)
+    _verify_account(gmail_service, settings)
     return gmail_service, calendar_service
+
+
+def _verify_account(gmail_service, settings: Settings) -> None:
+    """Warn if the signed-in account differs from the configured USER_EMAIL."""
+    try:
+        profile = gmail_service.users().getProfile(userId="me").execute()
+    except Exception:  # pragma: no cover - verification must never block a run
+        return
+    authorized = (profile.get("emailAddress") or "").strip()
+    if not authorized:
+        return
+    if settings.user_email and authorized.lower() != settings.user_email.lower():
+        print(
+            f"WARNING: you signed in as '{authorized}', but USER_EMAIL is "
+            f"'{settings.user_email}'. The agent will act on '{authorized}'.\n"
+        )
+    elif not settings.user_email:
+        settings.user_email = authorized

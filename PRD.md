@@ -67,7 +67,9 @@ Supporting requirements:
   exclude them on later runs).
 - **Auth:** authenticate to Google with OAuth using a downloaded **Client**
   (`credentials.json`) and a generated **Token** (`token.json`); scopes
-  `gmail.modify` + `calendar`.
+  `gmail.modify` + `calendar`. The user supplies the Gmail address they
+  authorised (`USER_EMAIL`), which pre-selects the account at sign-in and is
+  verified afterwards (see §6.6).
 - **Safety:** a `--dry-run` mode that analyses but performs no side effects.
 
 ## 6. Design decisions
@@ -116,6 +118,16 @@ adaptive thinking and structured outputs (a JSON schema) so the model returns a
 validated object — no brittle string parsing. The model and reasoning effort are
 configurable via environment variables.
 
+### 6.6 Account selection (USER_EMAIL)
+
+The agent acts on whichever Google account completes the OAuth consent — so signing in
+with the wrong account silently targets the wrong mailbox. **Decision:** the user
+provides the Gmail address they granted API access to (prompted on first run, stored in
+`.env` as `USER_EMAIL`). It is passed to Google as a `login_hint`, which pre-selects the
+correct account and avoids the common *"wrong account → access_denied"* error. After
+sign-in the authorised address is compared with `USER_EMAIL` and a warning is printed on
+mismatch. This keeps the project reusable by any user without changing code.
+
 ## 7. Success metrics / acceptance criteria
 
 - Given a sample of mixed emails, the agent books exactly the free-text invitations that
@@ -133,6 +145,7 @@ configurable via environment variables.
 | Accidental spam from auto-replies | `--no-reply` flag; replies only on confident busy-slot invites. |
 | Leaked credentials | `.gitignore` covers all secret files; least-privilege scopes. |
 | Wrong booking from vague time | Date+time mandatory (see §6.3). |
+| Authorising the wrong Google account | `USER_EMAIL` + `login_hint` pre-select the account; post-sign-in verification warns on mismatch (see §6.6). |
 
 ## 9. Out-of-scope future work
 

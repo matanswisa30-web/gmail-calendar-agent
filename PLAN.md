@@ -47,14 +47,17 @@ through `classifier` (rules) + `llm` (intent & extraction), checks the slot via
 
 | Module | Responsibility | Key functions |
 |--------|----------------|---------------|
-| `config.py` | Load settings from environment / `.env`; hold constants (scopes, file paths, defaults). | `Settings.load()` |
-| `auth.py` | Google OAuth: load/refresh token, run the installed-app flow on first use, build API services. | `get_credentials()`, `build_services()` |
+| `config.py` | Load settings from environment / `.env`; hold constants (scopes, file paths, defaults); persist `USER_EMAIL` back to `.env`. | `Settings.load()`, `save_user_email()` |
+| `auth.py` | Google OAuth: load/refresh token, run the installed-app flow (with `login_hint`) on first use, build API services, verify the signed-in account. | `get_credentials()`, `build_services()`, `_verify_account()` |
 | `gmail_client.py` | List recent messages, fetch + parse a message (subject/from/body), send a reply in-thread, ensure/apply a label. | `list_recent`, `get_message`, `send_reply`, `ensure_label`, `mark_processed` |
 | `calendar_client.py` | Free/busy check for a slot; create an event; resolve timezone. | `is_free`, `create_event` |
 | `classifier.py` | Rule-based pre-filter: score an email for meeting intent; offline, no network. | `rule_signal` |
 | `llm.py` | Anthropic Claude wrapper: one structured-output call returning intent + extracted fields. Degrades to rules-only if no key. | `analyze_email` |
 | `agent.py` | Glue: implement the 6 steps, decide book vs decline vs skip, produce a run summary. | `run` |
-| `main.py` | CLI parsing, build dependencies, call `agent.run`, print summary. | `main` |
+| `main.py` | CLI parsing, prompt once for `USER_EMAIL` (saved to `.env`), build dependencies, call `agent.run`, print summary. | `main` |
+
+The repository also ships a Claude **Skill** (`gmail-meeting-scheduler/SKILL.md`) that
+documents when and how to invoke this agent.
 
 ## 3. Data model
 
@@ -77,10 +80,11 @@ location: str
 
 ## 4. External interfaces
 
-- **Google OAuth** — installed-app flow (`InstalledAppFlow.run_local_server`). Scopes:
-  `gmail.modify`, `calendar`. Files: `credentials.json` (Client), `token.json` (Token).
+- **Google OAuth** — installed-app flow (`InstalledAppFlow.run_local_server`) with
+  `login_hint=USER_EMAIL` to pre-select the account. Scopes: `gmail.modify`, `calendar`.
+  Files: `credentials.json` (Client), `token.json` (Token).
 - **Gmail API v1** — `users().messages().list/get`, `...drafts()/messages().send`,
-  `...labels()`.
+  `...labels()`, `users().getProfile` (account verification).
 - **Calendar API v3** — `freebusy().query`, `events().insert`.
 - **Anthropic Messages API** — `claude-opus-4-8`, structured outputs via
   `output_config.format` (JSON schema), adaptive thinking.
@@ -123,6 +127,7 @@ location: str
 | Timezone | `TIMEZONE` | `Asia/Jerusalem` |
 | Client file | `CREDENTIALS_FILE` | `credentials.json` |
 | Token file | `TOKEN_FILE` | `token.json` |
+| User account | `USER_EMAIL` | — (prompted on first run, saved to `.env`) |
 
 ## 8. Operational notes
 
