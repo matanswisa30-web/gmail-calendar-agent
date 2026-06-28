@@ -1,0 +1,20 @@
+[project]
+name = "gmail-calendar-agent"
+version = "1.0.0"
+description = "An AI agent that scans Gmail for free-text meeting invitations and books them on Google Calendar when the slot is free."
+requires-python = ">=3.10"
+dependencies = [
+    "google-api-python-client>=2.0",
+    "google-auth-oauthlib>=1.0",
+    "google-auth-httplib2>=0.2",
+    "anthropic>=0.40",
+    "python-dotenv>=1.0",
+]
+
+[project.scripts]
+gmail-calendar-agent = "main:main"
+
+# Tell uv to manage dependencies only and not try to build/install this
+# project as a wheel. We run it directly with `uv run main.py`.
+[tool.uv]
+package = false
