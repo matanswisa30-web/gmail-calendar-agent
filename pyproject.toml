@@ -9,6 +9,9 @@ dependencies = [
     "google-auth-httplib2>=0.2",
     "anthropic>=0.40",
     "python-dotenv>=1.0",
+    # Windows (and any platform without a system zoneinfo database) needs the
+    # IANA tz data shipped as a package, otherwise ZoneInfo("Asia/Jerusalem")
+    # raises ZoneInfoNotFoundError.
     "tzdata>=2026.2",
 ]
 

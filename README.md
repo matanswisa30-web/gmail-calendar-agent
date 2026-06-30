@@ -208,6 +208,16 @@ Done. 1 event created, 1 decline sent, 2 skipped.
   similar in spirit to Face-ID: the target app only confirms identity).
 - Run `--dry-run` first to verify behaviour before letting the agent act.
 
+## Troubleshooting
+
+Issues commonly hit on a first run, with the fix:
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| `ZoneInfoNotFoundError: 'No time zone found with key Asia/Jerusalem'` | Windows ships no system IANA tz database; Python's `zoneinfo` needs the `tzdata` package. | Already declared as a dependency — run `uv sync` (or `uv add tzdata`). |
+| Browser shows **`Error 403: access_denied`** / *"app is currently being tested, only approved testers can access it"* on the OAuth consent screen | The OAuth app is in **Testing** publishing status and the signing-in Gmail account is not a registered test user. | In [Google Cloud Console](https://console.cloud.google.com/) → **APIs & Services → OAuth consent screen → Test users**, add the Gmail address, then re-run. |
+| `anthropic.BadRequestError` whose body is *"Your credit balance is too low to access the Anthropic API"* | The Anthropic account behind `ANTHROPIC_API_KEY` has no credit balance. | Add credit/billing at [console.anthropic.com](https://console.anthropic.com/) → **Plans & Billing**. (Or run without a key for reduced rules-only mode — but it won't book or decline, since it can't extract a concrete time.) |
+
 ## Related documents
 
 - [`PRD.md`](PRD.md) — product requirements & design decisions
